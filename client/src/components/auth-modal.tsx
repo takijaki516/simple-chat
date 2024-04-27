@@ -30,9 +30,9 @@ export const AuthModal = () => {
         </DrawerTrigger>
         <DrawerOverlay className="bg-opacity-50 backdrop-blur-md" />
         <DrawerContent>{isLogin ? "log in" : "sign up"}</DrawerContent>
-      </Drawer>
-    );
-  }
+        </Drawer>
+      );
+    }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

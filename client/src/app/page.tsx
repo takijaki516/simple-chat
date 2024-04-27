@@ -1,9 +1,7 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      main home page
-    </main>
-  );
-}
+const HomePage = () => {
+  return <div className="text-4xl py-2 container">HomePage</div>;
+};
+
+export default HomePage;

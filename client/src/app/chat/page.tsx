@@ -1,8 +1,9 @@
 "use client";
 
 import { useSocket } from "@/components/socket-provider";
-import { EventHandler, useEffect, useState } from "react";
-import { io } from "socket.io-client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 interface MessageInfo {
   content: string;
@@ -11,7 +12,6 @@ interface MessageInfo {
 
 const ChatPage = () => {
   const { socket, isConnected } = useSocket();
-
   const [value, setValue] = useState("");
   const [messages, setMessages] = useState<MessageInfo[]>([]);
 
@@ -31,11 +31,12 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <h1>Welcome to Chat</h1>
-      <div>
+    <main className="h-screen container pt-24 pb-10 flex flex-col items-center justify-between gap-2">
+      <div className="overflow-hidden border flex-grow w-full md:px-4 flex flex-col rounded-md">
         {messages.length === 0 ? (
-          <div>No messages yet</div>
+          <div className="text-2xl flex items-center justify-center h-full">
+            No messages yet
+          </div>
         ) : (
           <div>
             {messages.map((message, idx) => (
@@ -47,16 +48,15 @@ const ChatPage = () => {
         )}
       </div>
 
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-      />
-
-      <button className="border-2 border-white p-4" onClick={sendMessages}>
-        test button
-      </button>
-    </div>
+      <div className="flex items-center gap-2 h-16 border border-border">
+        <Input
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+        <Button onClick={sendMessages}>send message</Button>
+      </div>
+    </main>
   );
 };
 

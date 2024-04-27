@@ -19,8 +19,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export const UserDropdown = ({ content }: { content: React.ReactNode }) => {
   const [open, setOpen] = useState(false);
+  // REVIEW:
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
+  // TODO: fix css
   if (!isDesktop) {
     return (
       <Drawer open={open} onOpenChange={setOpen}>
@@ -30,7 +32,7 @@ export const UserDropdown = ({ content }: { content: React.ReactNode }) => {
             <AvatarFallback>ME</AvatarFallback>
           </Avatar>
         </DrawerTrigger>
-        <DrawerOverlay className="bg-opacity-50 backdrop-blur-md" />
+        <DrawerOverlay className="bg-background/50" />
         <DrawerContent>{content}</DrawerContent>
       </Drawer>
     );

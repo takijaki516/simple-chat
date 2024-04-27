@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SocketProvider } from "@/components/socket-provider";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
+import { MainNav } from "@/components/main-nav";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -34,9 +35,11 @@ export default function RootLayout({
           // REVIEW:
           disableTransitionOnChange
         >
+          <MainNav />
+
           <SocketProvider>
             <Toaster />
-            {children}
+            <main className="py-24 min-h-screen">{children}</main>
           </SocketProvider>
         </ThemeProvider>
       </body>
