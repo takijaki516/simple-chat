@@ -1,3 +1,7 @@
+import { useJwtStore } from "@/store/jwt";
+
 export const Home = () => {
-  return <div className="min-h-screen bg-background">HomePage</div>;
+  const { token } = useJwtStore();
+
+  return <div className="bg-background text-4xl">HomePage</div>;
 };

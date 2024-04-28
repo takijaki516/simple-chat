@@ -1,5 +1,4 @@
 import { useState } from "react";
-// import { LogOut } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -13,7 +12,6 @@ import {
   DrawerTrigger,
 } from "./ui/drawer";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
-// import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export const UserDropdown = ({ content }: { content: React.ReactNode }) => {

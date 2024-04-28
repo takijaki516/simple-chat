@@ -46,7 +46,16 @@ export class AuthController {
       password,
     );
 
-    res.cookie('refresh_token', refresh_token, { httpOnly: true });
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days,
+      domain: 'localhost',
+      path: '/',
+    });
+
+    // this.logger.debug(`access_token => ${access_token}`);
+    // this.logger.debug(`refresh_token => ${refresh_token}`);
+
     // REVIEW: refresh token을 넘겨줘야 하나?
     return { message: 'login success', access_token, refresh_token };
   }
@@ -60,7 +69,12 @@ export class AuthController {
     const { access_token, refresh_token } =
       await this.authService.signUp(createUserDto);
 
-    res.cookie('refresh_token', refresh_token, { httpOnly: true });
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days,
+      domain: 'localhost',
+      path: '/',
+    });
 
     return { message: 'signup success', access_token, refresh_token };
   }
@@ -81,7 +95,16 @@ export class AuthController {
     // hash refresh token and update to db
     await this.authService.updateRefreshTokenHash(user.id, refresh_token);
 
-    res.cookie('refresh_token', refresh_token, { httpOnly: true });
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days,
+      domain: 'localhost',
+      path: '/',
+    });
+
+    // this.logger.debug(`access_token => ${access_token}`);
+    // this.logger.debug(`refresh_token => ${refresh_token}`);
+
     return { message: 'refreshed token', access_token, refresh_token };
   }
 
@@ -92,7 +115,12 @@ export class AuthController {
     @GetCurrentUser() user: User,
     @Res({ passthrough: true }) res: Response,
   ) {
-    res.clearCookie('refresh_token', { httpOnly: true }); // cookie options must match
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days,
+      domain: 'localhost',
+      path: '/',
+    }); // cookie options must match
     // remove refresh token from db
     await this.authService.removeRefreshToken(user.id);
     return { message: 'logout success' };

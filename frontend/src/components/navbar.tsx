@@ -12,11 +12,11 @@ export const Navbar = () => {
 
   return (
     <div
-      className="fixed top-0 flex w-full items-center border-b border-border backdrop-blur-3xl
-     z-30"
+      className="fixed top-0 flex w-full items-center border-b border-border
+      backdrop-blur-3xl z-30"
     >
       <div className="container h-16 flex items-center justify-between">
-        <div>welcome </div>
+        <Link to={"/"}>Home</Link>
 
         <div className="flex items-center justify-center gap-2 md:gap-4">
           {token ? (
