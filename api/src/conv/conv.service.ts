@@ -44,6 +44,11 @@ export class ConvService {
             id: userId,
           },
         },
+        participants: {
+          connect: {
+            id: userId,
+          },
+        },
       },
     });
 

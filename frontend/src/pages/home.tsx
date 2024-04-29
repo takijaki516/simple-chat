@@ -1,7 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useJwtStore } from "@/store/jwt";
 import {
@@ -14,14 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
-const ConvRooms = [
-  { name: "Room 1", id: "asdf", members: 2 },
-  { name: "Room 2", id: "zxcvsdaf", members: 3 },
-  { name: "Room 3", id: "qwer", members: 4 },
-  { name: "Room 3", id: "asdfe", members: 5 },
-  { name: "Room 3", id: "1dfc", members: 6 },
-];
+import { useSocketStore } from "@/store/socket";
 
 export interface IConvInfo {
   name: string;
@@ -33,14 +32,30 @@ export interface IConvInfo {
 export const Home = () => {
   const [title, setTitle] = useState("");
   const [nickname, setNickname] = useState("");
+  const [convs, setConvs] = useState<Array<IConvInfo>>([]);
+  const { socket } = useSocketStore();
 
   const { token } = useJwtStore();
   const navigate = useNavigate();
 
   //TODO: add react query
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const fetchConvs = async () => {
+      const res = await fetch("http://localhost:3008/conv");
+      const convs = (await res.json()) as Array<IConvInfo>;
+      setConvs(convs);
+    };
+
+    fetchConvs();
+  }, []);
 
   const createConv = async () => {
+    // TODO
+    if (!socket) {
+      console.log("socket not connected");
+      return;
+    }
+
     const payload = {
       title,
     };
@@ -57,7 +72,14 @@ export const Home = () => {
 
     const { convId } = await res.json();
 
+    // TODO:
+    // socket.emit("create_room", convId);
+
     // navigate to the newly created conversation
+    navigate(`/chat/${convId}`);
+  };
+
+  const joinConv = (convId: string) => {
     navigate(`/chat/${convId}`);
   };
 
@@ -97,10 +119,16 @@ export const Home = () => {
       </Dialog>
 
       <div className="grid grid-cols-2 gap-10">
-        {ConvRooms.map((conv) => (
+        {convs.map((conv) => (
           <Card key={conv.id}>
-            <CardHeader>{conv.name}</CardHeader>
-            <CardContent>{conv.members}</CardContent>
+            <CardHeader>
+              <CardTitle>{conv.name}</CardTitle>
+              <CardDescription>owner: {conv.owner}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-between items-center">
+              <div className="text-lg">active members: {conv.members}명</div>
+              <Button onClick={() => joinConv(conv.id)}>Join</Button>
+            </CardContent>
           </Card>
         ))}
       </div>

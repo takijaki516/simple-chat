@@ -6,14 +6,29 @@ import { CreateConvDto } from './dto/create-conv.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
 
-@Public()
+export interface IConvInfo {
+  name: string;
+  id: string;
+  owner: string;
+  members: number;
+}
+
 @Controller('conv')
 export class ConvController {
   constructor(private convService: ConvService) {}
 
+  @Public()
   @Get()
-  findAll() {
-    return this.convService.findAll();
+  async findAll(): Promise<Array<IConvInfo>> {
+    // TODO: response type
+    const convs = await this.convService.findAll();
+
+    return convs.map((conv) => ({
+      id: conv.id,
+      name: conv.title,
+      owner: conv.owner.username,
+      members: conv._count.participants,
+    }));
   }
 
   @Get('/:id')

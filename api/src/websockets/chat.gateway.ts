@@ -30,10 +30,7 @@ interface UserInfo {
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private convService: ConvService) {}
-
   private readonly logger = new Logger(ChatGateway.name);
-  // TODO:
   private connectedClients = new Map<string, string>();
   private rooms = new Map<string, Array<UserInfo>>();
 
@@ -46,7 +43,8 @@ export class ChatGateway
 
   handleConnection(client: Socket) {
     const { sockets } = this.io.sockets;
-    this.connectedClients.set(client.id, client.handshake.address); // REVIEW:
+    // REVIEW
+    this.connectedClients.set(client.id, client.handshake.address);
     this.logger.log(`Client id: ${client.id} connected`);
     this.logger.debug(`Number of connected clients: ${sockets.size}`);
   }
@@ -56,39 +54,33 @@ export class ChatGateway
     this.logger.log(`Client id: ${client.id} disconnected`);
   }
 
-  @SubscribeMessage('ping')
-  handleMessage(client: Socket, data: any) {
-    this.logger.log(`Message received from client id : ${client.id}`);
-    this.logger.debug(`Payload: ${data}`);
-  }
+  // NOTE: db에 저장되어 있음
+  // TODO: memory에 저장하기F
+  // @UseGuards(WsJwtGuard)
+  // @SubscribeMessage('create_room')
+  // createRoom(client: Socket, roomId: any) {}
 
+  @UseGuards(WsJwtGuard)
   @SubscribeMessage('join_room')
-  joinRoom(client: Socket, roomId: string) {
-    console.log('🚀 ~ file: chat.gateway.ts:64 ~ joinRoom ~ client:', client);
-
-    if (!this.rooms.has(roomId)) {
-      // this.rooms.set(roomId, [{userId}]);
-    }
-
+  joinRoom(client: Socket, data: { roomId: string }) {
+    const { roomId } = data;
     client.join(roomId);
-    client.to(roomId).emit(`user `);
   }
 
-  @SubscribeMessage('login_client')
-  async loginClient(client: Socket, clientId: string) {
-    const socketId = client.id;
-    const responsePayload = { status: 'login', id: socketId };
+  // @UseGuards(WsJwtGuard)
+  // @SubscribeMessage('leave_room')
+  // logout(client: Socket, userId: string) {}
 
-    // 브로드캐스트
-    this.io.emit('client_info', responsePayload);
-  }
-
-  @SubscribeMessage('logout')
-  async logout(client: Socket, id: string) {
-    const socketId = client.id;
-    if (id !== '' && id !== undefined) {
-      const responsePayload = { status: 'offline', id: id };
-      this.io.emit('client_info', responsePayload);
-    }
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('user_message')
+  userMessage(client: Socket, data: { roomId: string; message: string }) {
+    const { roomId, message } = data;
+    console.log(
+      '🚀 ~ file: chat.gateway.ts:84 ~ userMessage ~ roomId:',
+      roomId,
+    );
+    const userId = client.userId;
+    // broadcast to all clients in the room including sender
+    this.io.in(roomId).emit('broadcast_message', { userId, message });
   }
 }

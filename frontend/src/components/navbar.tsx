@@ -16,6 +16,7 @@ export const Navbar = () => {
       backdrop-blur-3xl z-30"
     >
       <div className="container h-16 flex items-center justify-between">
+        {/* TODO: leave socket.io room */}
         <Link to={"/"}>Home</Link>
 
         <div className="flex items-center justify-center gap-2 md:gap-4">
