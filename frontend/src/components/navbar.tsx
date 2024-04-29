@@ -21,13 +21,12 @@ export const Navbar = () => {
         <div className="flex items-center justify-center gap-2 md:gap-4">
           {token ? (
             <UserDropdown
+              // TODO: fix css
               content={
-                <div className="w-full rounded-md p-2 sm:w-56">
-                  <div className="p-2">user data</div>
-                  <Button>
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button variant={"destructive"} className="flex w-full gap-1">
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
               }
             />
           ) : (

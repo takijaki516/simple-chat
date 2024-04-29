@@ -6,6 +6,7 @@ import { useCheckAuth } from "@/lib/auth-utils";
 
 export const RootLayout = () => {
   useCheckAuth();
+  
 
   return (
     <div className="h-screen antialiased  bg-background dark:bg-background">

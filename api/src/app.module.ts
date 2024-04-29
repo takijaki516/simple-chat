@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+
 import { WebsocketsModule } from './websockets/websockets.module';
 import { AuthModule } from './auth/auth.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConvModule } from './conv/conv.module';
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule.forRoot({ isGlobal: true }),
     WebsocketsModule,
     AuthModule,
-    PrismaModule,
+    ConvModule,
   ],
   controllers: [],
   providers: [],

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useJwtStore } from "@/store/jwt";
+import { useSocketStore } from "@/store/socket";
 
 export const refreshToken = async () => {
   // TODO: add try catch
@@ -20,21 +21,25 @@ export const refreshToken = async () => {
 
 export const useCheckAuth = () => {
   const { token, setToken } = useJwtStore();
+  const { setSocket } = useSocketStore();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (token) {
-      // navigate("/"); // go back equivalent to back button
+      setSocket(token);
       console.log(
-        "token exists 🚀 ~ file: auth-utils.ts:27 ~ useEffect ~ token:",
+        "token exists 🚀 ~ file: auth-utils.ts:27 ~ useEffect ~ token: and socket connected",
         token
       );
+      // TODO:
+      // navigate("/"); // go back equivalent to back button
       return;
     }
 
     refreshToken()
       .then((access_token) => {
         console.log("refreshed token");
+        setSocket(access_token);
         setToken(access_token);
       })
       .catch((error) => {

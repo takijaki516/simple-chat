@@ -9,8 +9,8 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Tokens } from './types/tokens.type';
-import { JwtPayload } from './types/jwt-payload.type';
+import { Tokens } from '../types/tokens.type';
+import { JwtPayload } from '../types/jwt-payload.type';
 import { CreateUserDto } from './dto/create-user.dto';
 
 const REFRESH_TOKEN_SALT = 10;

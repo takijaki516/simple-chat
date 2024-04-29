@@ -13,7 +13,14 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 export const tempSecret = 'sample secret';
 
 @Module({
-  imports: [PrismaModule, PassportModule, JwtModule.register({})],
+  imports: [
+    PrismaModule,
+    PassportModule,
+    // REVIEW:
+    JwtModule.register({
+      global: true,
+    }),
+  ],
   // strategies are providers
   providers: [
     AuthService,

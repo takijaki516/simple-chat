@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
+import { ChatGateway } from './websockets/chat.gateway';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,6 +18,9 @@ async function bootstrap() {
     exposedHeaders: ['Authorization'], // REVIEW:
   };
   app.enableCors(corsOptions);
+
+  //
+  // const chatGateway = app.get(ChatGateway);
 
   // cookie
   app.use(cookieParser());
