@@ -1,10 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Controller, Get, Param } from '@nestjs/common';
 
 import { ConvService } from './conv.service';
-import { CreateConvDto } from './dto/create-conv.dto';
 import { Public } from 'src/common/decorators/public.decorator';
-import { GetCurrentUser } from 'src/common/decorators/get-current-user.decorator';
 
 export interface IConvInfo {
   name: string;
@@ -13,6 +10,7 @@ export interface IConvInfo {
   members: number;
 }
 
+// TODO: add guard
 @Controller('conv')
 export class ConvController {
   constructor(private convService: ConvService) {}
@@ -38,17 +36,7 @@ export class ConvController {
       // TODO: add HTTPSTATUSCODE
       return { message: 'conversation not found' };
     } else {
-      return { message: 'conversation found', convId: conv.id };
+      return { message: 'conversation found', data: conv.id };
     }
-  }
-
-  @Post()
-  async createConv(
-    @GetCurrentUser() user: User,
-    @Body() payload: CreateConvDto,
-  ) {
-    const { convId } = await this.convService.createConv(user.id, payload);
-
-    return { message: 'successfully created conversation', convId };
   }
 }

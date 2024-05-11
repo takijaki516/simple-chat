@@ -16,20 +16,18 @@ export class WsJwtGuard implements CanActivate {
     }
 
     const client: Socket = context.switchToWs().getClient();
-
     const userId = WsJwtGuard.validateToken(client);
     client.userId = userId;
+
     return true;
   }
 
   // socket.io middleware
   static validateToken(client: Socket) {
-    const { authorization } = client.handshake.headers; // REVIEW:
+    // REVIEW:
+    const { authorization } = client.handshake.headers;
     const token: string = authorization.split(' ')[1];
-
-    // TODO: as ??
-    const payload = verify(token, 'at-secret') as JwtPayload;
-
+    const payload = verify(token, 'access_token_secret') as JwtPayload;
     return payload.userId;
   }
 }

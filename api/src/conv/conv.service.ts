@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateConvDto } from './dto/create-conv.dto';
 
 @Injectable()
 export class ConvService {
@@ -33,25 +32,5 @@ export class ConvService {
         id: id,
       },
     });
-  }
-
-  async createConv(userId: string, payload: CreateConvDto) {
-    const conv = await this.prisma.conversations.create({
-      data: {
-        title: payload.title,
-        owner: {
-          connect: {
-            id: userId,
-          },
-        },
-        participants: {
-          connect: {
-            id: userId,
-          },
-        },
-      },
-    });
-
-    return { convId: conv.id };
   }
 }

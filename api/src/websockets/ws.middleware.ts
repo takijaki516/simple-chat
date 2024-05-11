@@ -8,7 +8,7 @@ export type SocketIOMiddleware = {
 export const SocketAuthMiddleware = (): SocketIOMiddleware => {
   return (client, next) => {
     try {
-      // TODO:
+      // TODO: .env를 어떻게 사용할지
       WsJwtGuard.validateToken(client);
       next();
     } catch (error) {

@@ -12,7 +12,8 @@ import { Server, Socket } from 'socket.io';
 import { WebsocketExceptionFilter } from './ws-exception.filter';
 import { SocketAuthMiddleware } from './ws.middleware';
 import { WsJwtGuard } from './ws-jwt.guard';
-import { ConvService } from 'src/conv/conv.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateConvDto } from './dto/create-conv.dto';
 
 interface UserInfo {
   userId: string;
@@ -30,9 +31,11 @@ interface UserInfo {
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
+  // LOG
   private readonly logger = new Logger(ChatGateway.name);
   private connectedClients = new Map<string, string>();
-  private rooms = new Map<string, Array<UserInfo>>();
+
+  constructor(private readonly prismaService: PrismaService) {}
 
   @WebSocketServer()
   io: Server;
@@ -42,34 +45,20 @@ export class ChatGateway
   }
 
   handleConnection(client: Socket) {
-    const { sockets } = this.io.sockets;
-    // REVIEW
     this.connectedClients.set(client.id, client.handshake.address);
     this.logger.log(`Client id: ${client.id} connected`);
-    this.logger.debug(`Number of connected clients: ${sockets.size}`);
+    this.logger.log(
+      `handleConnection에서 Number of connected clients: ${this.connectedClients.size}`,
+    );
   }
 
   handleDisconnect(client: Socket) {
     this.connectedClients.delete(client.id);
-    this.logger.log(`Client id: ${client.id} disconnected`);
   }
-
-  // NOTE: db에 저장되어 있음
-  // TODO: memory에 저장하기F
-  // @UseGuards(WsJwtGuard)
-  // @SubscribeMessage('create_room')
-  // createRoom(client: Socket, roomId: any) {}
 
   @UseGuards(WsJwtGuard)
-  @SubscribeMessage('join_room')
-  joinRoom(client: Socket, data: { roomId: string }) {
-    const { roomId } = data;
-    client.join(roomId);
-  }
-
-  // @UseGuards(WsJwtGuard)
-  // @SubscribeMessage('leave_room')
-  // logout(client: Socket, userId: string) {}
+  @SubscribeMessage('leave_room')
+  logout(client: Socket, userId: string) {}
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('user_message')
@@ -82,5 +71,54 @@ export class ChatGateway
     const userId = client.userId;
     // broadcast to all clients in the room including sender
     this.io.in(roomId).emit('broadcast_message', { userId, message });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('create_conv')
+  async createRoom(client: Socket, data: CreateConvDto) {
+    const userId = client.userId;
+    const { title } = data;
+
+    // TODO: move to conversation service
+    const createdConv = await this.prismaService.conversations.create({
+      data: {
+        title,
+        ownerId: userId,
+      },
+    });
+
+    this.io.emit('created_conv', createdConv.title); // broadcast to all clients
+    return createdConv.id;
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('join_conv')
+  async joinRoom(client: Socket, data: { convId: string }) {
+    const userId = client.userId;
+    console.log(
+      '🚀 ~ file: chat.gateway.ts:97 ~ joinRoom ~ convId:',
+      data.convId,
+    );
+
+    // TODO:  move to conversation service
+    try {
+      const joinedConv = await this.prismaService.conversations.update({
+        where: {
+          id: data.convId,
+        },
+        data: {
+          participants: {
+            connect: {
+              id: userId,
+            },
+          },
+        },
+      });
+
+      return 'success';
+    } catch (error) {
+      this.logger.error(error);
+      return 'error';
+    }
   }
 }
