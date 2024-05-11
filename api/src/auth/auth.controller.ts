@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Logger,
-  Post,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Logger, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { type Response } from 'express';
 import { type User } from '@prisma/client';
@@ -26,14 +18,6 @@ export class AuthController {
 
   constructor(private readonly authService: AuthService) {}
 
-  // NOTE: just for testing
-  // REVIEW: refresh guard를 사용하면 refresh guard가 더먼저 사용된다. guard의 순서?
-  @UseGuards(RefreshJwtGuard)
-  @Get('authenticate')
-  async user(@GetCurrentUser() user: User) {
-    return user;
-  }
-
   @Public()
   @Post('login')
   @ApiOkResponse({ type: AuthEntity })
@@ -41,10 +25,8 @@ export class AuthController {
     @Body() { email, password }: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { access_token, refresh_token } = await this.authService.login(
-      email,
-      password,
-    );
+    const { access_token, refresh_token, username, userId } =
+      await this.authService.login(email, password);
 
     res.cookie('refresh_token', refresh_token, {
       httpOnly: true,
@@ -53,11 +35,15 @@ export class AuthController {
       path: '/',
     });
 
-    // this.logger.debug(`access_token => ${access_token}`);
-    // this.logger.debug(`refresh_token => ${refresh_token}`);
-
-    // REVIEW: refresh token을 넘겨줘야 하나?
-    return { message: 'login success', access_token, refresh_token };
+    return {
+      message: 'login success',
+      data: {
+        username,
+        refresh_token,
+        access_token,
+        userId,
+      },
+    };
   }
 
   @Public()
@@ -66,7 +52,7 @@ export class AuthController {
     @Body() createUserDto: CreateUserDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { access_token, refresh_token } =
+    const { access_token, refresh_token, username, userId } =
       await this.authService.signUp(createUserDto);
 
     res.cookie('refresh_token', refresh_token, {
@@ -76,7 +62,15 @@ export class AuthController {
       path: '/',
     });
 
-    return { message: 'signup success', access_token, refresh_token };
+    return {
+      message: 'signup success',
+      data: {
+        username,
+        refresh_token,
+        access_token,
+        userId,
+      },
+    };
   }
 
   @UseGuards(RefreshJwtGuard)
@@ -85,7 +79,6 @@ export class AuthController {
   async refresh(
     @GetCurrentUser() user: User,
     @Res({ passthrough: true }) res: Response,
-    // TODO: add cookie type
   ) {
     const { access_token, refresh_token } = await this.authService.getTokens(
       user.id,
@@ -102,27 +95,33 @@ export class AuthController {
       path: '/',
     });
 
-    // this.logger.debug(`access_token => ${access_token}`);
-    // this.logger.debug(`refresh_token => ${refresh_token}`);
-
-    return { message: 'refreshed token', access_token, refresh_token };
+    return {
+      message: 'refreshed token',
+      data: {
+        username: user.username,
+        refresh_token,
+        access_token,
+        userId: user.id,
+      },
+    };
   }
 
-  // TODO: type for cookies
   @UseGuards(RefreshJwtGuard)
   @Post('logout')
   async logout(
     @GetCurrentUser() user: User,
     @Res({ passthrough: true }) res: Response,
   ) {
+    // NOTE: cookie options must match
     res.clearCookie('refresh_token', {
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days,
       domain: 'localhost',
       path: '/',
-    }); // cookie options must match
-    // remove refresh token from db
-    await this.authService.removeRefreshToken(user.id);
+    });
+
+    await this.authService.logout(user.id);
+
     return { message: 'logout success' };
   }
 }

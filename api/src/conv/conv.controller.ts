@@ -7,7 +7,6 @@ export interface IConvInfo {
   name: string;
   id: string;
   owner: string;
-  members: number;
 }
 
 // TODO: add guard
@@ -25,18 +24,16 @@ export class ConvController {
       id: conv.id,
       name: conv.title,
       owner: conv.owner.username,
-      members: conv._count.participants,
     }));
   }
 
   @Get('/:id')
   async findOne(@Param('id') id: string) {
-    const conv = await this.convService.findOne(id);
+    const conv = await this.convService.findById(id);
     if (!conv) {
-      // TODO: add HTTPSTATUSCODE
       return { message: 'conversation not found' };
     } else {
-      return { message: 'conversation found', data: conv.id };
+      return { message: 'conversation found', data: conv };
     }
   }
 }

@@ -1,26 +1,29 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useJwtStore } from "@/store/jwt";
+import { useAuthStore } from "@/store/auth";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useSocketStore } from "@/store/socket";
 
 export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const { token, setToken } = useJwtStore();
+  const { auth, setAuth } = useAuthStore();
+  const { setSocket } = useSocketStore();
 
   useEffect(() => {
-    if (token) {
-      navigate(-1);
+    if (auth.token) {
+      navigate("/");
       return;
     }
-  }, [token]);
+  }, [auth.token, auth.username]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     const payload = {
       email,
       password,
@@ -36,9 +39,14 @@ export const Login = () => {
       credentials: "include",
     });
 
-    const { access_token } = await res.json();
+    const { data } = await res.json();
 
-    setToken(access_token);
+    setAuth({
+      token: data.access_token,
+      username: data.username,
+      userId: data.userId,
+    });
+    setSocket(data.access_token);
     return navigate("/");
   };
 
@@ -74,9 +82,8 @@ export const Login = () => {
       </form>
 
       <p className="text-muted-foreground">
-        {"signup if you don't have an account"}
         <Link className="px-1 underline hover:text-foreground" to={"/signup"}>
-          signup
+          go to signup page
         </Link>
       </p>
     </div>

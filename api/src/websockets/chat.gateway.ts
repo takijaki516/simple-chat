@@ -16,8 +16,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateConvDto } from './dto/create-conv.dto';
 
 interface UserInfo {
-  userId: string;
-  nickname: string;
+  username: string;
+  socketId: string;
 }
 
 @WebSocketGateway({
@@ -31,9 +31,14 @@ interface UserInfo {
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  // LOG
   private readonly logger = new Logger(ChatGateway.name);
   private connectedClients = new Map<string, string>();
+
+  // TODO: use redis
+  // NOTE: array vs map
+  private convUsers = new Map<string, Map<string, UserInfo>>();
+
+  private convInfo = new Map<string, { title: string; ownerId: string }>();
 
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -57,25 +62,8 @@ export class ChatGateway
   }
 
   @UseGuards(WsJwtGuard)
-  @SubscribeMessage('leave_room')
-  logout(client: Socket, userId: string) {}
-
-  @UseGuards(WsJwtGuard)
-  @SubscribeMessage('user_message')
-  userMessage(client: Socket, data: { roomId: string; message: string }) {
-    const { roomId, message } = data;
-    console.log(
-      '🚀 ~ file: chat.gateway.ts:84 ~ userMessage ~ roomId:',
-      roomId,
-    );
-    const userId = client.userId;
-    // broadcast to all clients in the room including sender
-    this.io.in(roomId).emit('broadcast_message', { userId, message });
-  }
-
-  @UseGuards(WsJwtGuard)
   @SubscribeMessage('create_conv')
-  async createRoom(client: Socket, data: CreateConvDto) {
+  async createConv(client: Socket, data: CreateConvDto) {
     const userId = client.userId;
     const { title } = data;
 
@@ -87,38 +75,88 @@ export class ChatGateway
       },
     });
 
+    this.convUsers.set(createdConv.id, new Map());
+
     this.io.emit('created_conv', createdConv.title); // broadcast to all clients
     return createdConv.id;
   }
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('join_conv')
-  async joinRoom(client: Socket, data: { convId: string }) {
-    const userId = client.userId;
-    console.log(
-      '🚀 ~ file: chat.gateway.ts:97 ~ joinRoom ~ convId:',
-      data.convId,
-    );
-
+  async joinRoom(client: Socket, { convId }: { convId: string }) {
     // TODO:  move to conversation service
     try {
-      const joinedConv = await this.prismaService.conversations.update({
+      const { username: username } = await this.prismaService.user.findUnique({
         where: {
-          id: data.convId,
+          id: client.userId,
         },
-        data: {
-          participants: {
-            connect: {
-              id: userId,
-            },
-          },
+        select: {
+          username: true,
         },
       });
+
+      client.join(convId);
+      this.convUsers
+        .get(convId)
+        .set(client.userId, { socketId: client.id, username });
+
+      // broadcast to all clients in the room including sender
+      this.io.in(convId).emit('joined_conv', client.userId); // TODO:
 
       return 'success';
     } catch (error) {
       this.logger.error(error);
       return 'error';
     }
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('leave_conv')
+  leaveConv(client: Socket, { convId }: { convId: string }) {
+    client.leave(convId);
+    this.convUsers.get(convId).delete(client.userId);
+    // broadcast to all clients in the room excluding sender
+    client.to(convId).emit('left_conv', client.userId); // TODO:
+
+    return {
+      status: 'success',
+      data: {},
+    };
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('delete_conv')
+  async deleteConv(client: Socket, { convId }: { convId: string }) {
+    const userId = client.userId;
+
+    // TODO: move to conversation service
+    const deletedConv = await this.prismaService.conversations.delete({
+      where: {
+        ownerId: userId,
+        id: convId,
+      },
+    });
+
+    const convUsers = this.convUsers.get(convId);
+
+    convUsers.forEach((userInfo, userId) => {
+      this.io.to(userInfo.socketId).emit('deleted_conv', deletedConv.id);
+    });
+
+    this.convUsers.delete(deletedConv.id);
+
+    return { status: 'success' };
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('message')
+  userMessage(
+    client: Socket,
+    data: { convId: string; username: string; message: string },
+  ) {
+    const { convId, message, username } = data;
+    const userId = client.userId;
+    // broadcast to all clients in the room including sender
+    this.io.in(convId).emit('broadcast_message', { userId, message, username });
   }
 }

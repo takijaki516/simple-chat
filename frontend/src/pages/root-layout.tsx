@@ -6,15 +6,15 @@ import { useCheckAuth } from "@/lib/auth-utils";
 
 export const RootLayout = () => {
   useCheckAuth();
-  
 
   return (
     <div className="h-screen antialiased  bg-background dark:bg-background">
       <Navbar />
+
       <div className="pt-24 h-full container">
         <Outlet />
       </div>
-      <Toaster />
+      <Toaster richColors />
     </div>
   );
 };

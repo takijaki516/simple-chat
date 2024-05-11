@@ -2,13 +2,13 @@
 import { Link } from "react-router-dom";
 import { LogOut } from "lucide-react";
 
-import { useJwtStore } from "@/store/jwt";
+import { useAuthStore } from "@/store/auth";
 import { DarkModeToggler } from "./dark-mode-toggler";
 import { UserDropdown } from "./user-dropdown";
 import { Button } from "./ui/button";
 
 export const Navbar = () => {
-  const { token } = useJwtStore();
+  const { auth } = useAuthStore();
 
   return (
     <div
@@ -20,7 +20,7 @@ export const Navbar = () => {
         <Link to={"/"}>Home</Link>
 
         <div className="flex items-center justify-center gap-2 md:gap-4">
-          {token ? (
+          {auth.token ? (
             <UserDropdown
               // TODO: fix css
               content={

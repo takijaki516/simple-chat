@@ -13,6 +13,7 @@ import { Tokens } from '../types/tokens.type';
 import { JwtPayload } from '../types/jwt-payload.type';
 import { CreateUserDto } from './dto/create-user.dto';
 
+// TODO: move to .env
 const REFRESH_TOKEN_SALT = 10;
 const HAHS_PASSWORD_SALT = 10;
 
@@ -24,8 +25,7 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  // TODO: add prisma transaction??
-  async signUp(dto: CreateUserDto): Promise<Tokens> {
+  async signUp(dto: CreateUserDto) {
     let user = await this.prismaService.user.findUnique({
       where: {
         email: dto.email,
@@ -48,12 +48,16 @@ export class AuthService {
 
     const tokens = await this.getTokens(user.id, user.email);
 
-    // TODO: move this to controller
     await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
-    return tokens;
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      username: user.username,
+      userId: user.id,
+    };
   }
 
-  async login(email: string, password: string): Promise<Tokens> {
+  async login(email: string, password: string) {
     const user = await this.prismaService.user.findUnique({ where: { email } });
 
     if (!user) {
@@ -69,20 +73,23 @@ export class AuthService {
     const tokens = await this.getTokens(user.id, user.email);
     await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
 
-    return tokens;
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      username: user.username,
+      userId: user.id,
+    };
   }
 
   async logout(userId: string): Promise<boolean> {
     await this.prismaService.user.update({
       where: {
         id: userId,
-        // REVIEW: prisma query
         refreshToken: {
           not: null,
         },
       },
       data: {
-        // REVIEW: refreshtoken을 만료처리
         refreshToken: null,
       },
     });
@@ -148,22 +155,10 @@ export class AuthService {
     };
   }
 
-  async findOne(userId: string) {
+  async findUserById(userId: string) {
     return this.prismaService.user.findUnique({
       where: {
         id: userId,
-      },
-    });
-  }
-
-  // remove refresh token from db
-  async removeRefreshToken(userId: string) {
-    await this.prismaService.user.update({
-      where: {
-        id: userId,
-      },
-      data: {
-        refreshToken: null,
       },
     });
   }

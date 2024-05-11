@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
-import { useJwtStore } from "@/store/jwt";
+import { useAuthStore } from "@/store/auth";
 import { useSocketStore } from "@/store/socket";
+import { useNavigate } from "react-router-dom";
 
 export const refreshToken = async () => {
   // TODO: add try catch
@@ -15,37 +15,35 @@ export const refreshToken = async () => {
     throw new Error("auth error");
   }
 
-  const { access_token } = await res.json();
-  return access_token;
+  const { data } = await res.json();
+  return {
+    username: data.username,
+    token: data.access_token,
+    userId: data.userId,
+  };
 };
 
 export const useCheckAuth = () => {
-  const { token, setToken } = useJwtStore();
+  const { auth, setAuth } = useAuthStore();
   const { setSocket } = useSocketStore();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (token) {
-      setSocket(token);
-      console.log(
-        "token exists 🚀 ~ file: auth-utils.ts:27 ~ useEffect ~ token: and socket connected",
-        token
-      );
-      // TODO:
-      // navigate("/"); // go back equivalent to back button
+    if (auth.token) {
+      setSocket(auth.token);
       return;
     }
 
     refreshToken()
-      .then((access_token) => {
+      .then(({ username, token, userId }) => {
         console.log("refreshed token");
-        setSocket(access_token);
-        setToken(access_token);
+        setSocket(token);
+        setAuth({ token, username, userId });
       })
       .catch((error) => {
         // TODO: redirect to login page
         console.error(error as unknown as Error);
-        console.log("ㅋㅋㅋㅋF");
+        return navigate("/login");
       });
   }, []);
 };

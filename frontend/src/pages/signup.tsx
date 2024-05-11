@@ -1,24 +1,26 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useJwtStore } from "@/store/jwt";
+import { useAuthStore } from "@/store/auth";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useSocketStore } from "@/store/socket";
 
 export const SignUp = () => {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { setToken, token } = useJwtStore();
+  const { setAuth, auth } = useAuthStore();
   const navigate = useNavigate();
+  const { setSocket } = useSocketStore();
 
   useEffect(() => {
-    if (token) {
-      navigate(-1);
+    if (auth.token) {
+      navigate("/");
       return;
     }
-  }, [token]);
+  }, [auth.token, auth.username]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,9 +39,16 @@ export const SignUp = () => {
       },
       credentials: "include",
     });
-    const { access_token } = await res.json();
 
-    setToken(access_token);
+    const { data } = await res.json();
+
+    setAuth({
+      token: data.access_token,
+      username: data.username,
+      userId: data.userId,
+    });
+    setSocket(data.access_token);
+
     return navigate("/");
   };
 
@@ -81,14 +90,13 @@ export const SignUp = () => {
           />
         </div>
         <Button type="submit" className="w-full mt-6">
-          LOGIN
+          SIGNUP
         </Button>
       </form>
 
       <p className="text-muted-foreground">
-        {"already have an account?"}
         <Link className="px-1 underline hover:text-foreground" to={"/login"}>
-          login
+          go to login page
         </Link>
       </p>
     </div>

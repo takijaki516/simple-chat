@@ -16,7 +16,6 @@ export const tempSecret = 'sample secret';
   imports: [
     PrismaModule,
     PassportModule,
-    // REVIEW:
     JwtModule.register({
       global: true,
     }),

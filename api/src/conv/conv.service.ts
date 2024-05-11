@@ -17,16 +17,11 @@ export class ConvService {
             username: true,
           },
         },
-        _count: {
-          select: {
-            participants: true,
-          },
-        },
       },
     });
   }
 
-  findOne(id: string) {
+  findById(id: string) {
     return this.prisma.conversations.findUnique({
       where: {
         id: id,
