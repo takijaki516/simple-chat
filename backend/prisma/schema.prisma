@@ -22,12 +22,12 @@ model User {
 
   refreshToken String?
 
-  conversations Conversations[] @relation("owner")
+  myConversations Conversations[] @relation("owner")
+
+  joinedConversations Conversations[] @relation("convs")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@map("users")
 }
 
 model Conversations {
@@ -38,8 +38,8 @@ model Conversations {
   ownerId String
   owner   User   @relation("owner", fields: [ownerId], references: [id], onDelete: Cascade)
 
+  members User[] @relation("convs")
+
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
-
-  @@map("conversations")
 }
